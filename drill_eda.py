@@ -23,9 +23,21 @@ def compute_summary(df):
         DataFrame containing count, mean, median, std, min, max
         for each numeric column. Save the result to output/summary.csv.
     """
-    # TODO: Compute descriptive statistics (count, mean, median, std, min, max)
-    #       for all numeric columns and save to output/summary.csv
-    pass
+    os.makedirs("output", exist_ok=True)
+
+    numeric_df = df.select_dtypes(include=[np.number])
+
+    summary = pd.DataFrame({
+        "count": numeric_df.count(),
+        "mean": numeric_df.mean(),
+        "median": numeric_df.median(),
+        "std": numeric_df.std(),
+        "min": numeric_df.min(),
+        "max": numeric_df.max()
+    }).T
+
+    summary.to_csv("output/summary.csv")
+    return summary
 
 
 def plot_distributions(df, columns, output_path):
@@ -39,9 +51,20 @@ def plot_distributions(df, columns, output_path):
     Returns:
         None — saves the figure to output_path
     """
-    # TODO: Create a 2x2 figure with sns.histplot (KDE overlay) for each column
-    #       Add titles, labels, and tight layout before saving
-    pass
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+    fig, ax = plt.subplots(2, 2, figsize=(12, 10))
+    ax = ax.flatten()
+
+    for i, col in enumerate(columns):
+        sns.histplot(df[col], kde=True, ax=ax[i])
+        ax[i].set_title(f"Distribution of {col}")
+        ax[i].set_xlabel(col)
+        ax[i].set_ylabel("Frequency")
+
+    plt.tight_layout()
+    plt.savefig(output_path)
+    plt.close()
 
 
 def plot_correlation(df, output_path):
@@ -54,19 +77,32 @@ def plot_correlation(df, output_path):
     Returns:
         None — saves the figure to output_path
     """
-    # TODO: Compute the correlation matrix for numeric columns and
-    #       visualize it as an annotated Seaborn heatmap
-    pass
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+    numeric_df = df.select_dtypes(include=[np.number])
+    corr_matrix = numeric_df.corr(method="pearson")
+
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(corr_matrix, annot=True, cmap="coolwarm")
+    plt.title("Correlation Heatmap")
+    plt.tight_layout()
+    plt.savefig(output_path)
+    plt.close()
 
 
 def main():
     """Load data, compute summary, and generate all plots."""
     os.makedirs("output", exist_ok=True)
 
-    # TODO: Load the CSV from data/sample_sales.csv
-    # TODO: Call compute_summary and save the result
-    # TODO: Choose 4 numeric-friendly columns and call plot_distributions
-    # TODO: Call plot_correlation
+    df = pd.read_csv("data/sample_sales.csv")
+
+    compute_summary(df)
+
+    numeric_columns = df.select_dtypes(include=[np.number]).columns.tolist()
+    selected_columns = numeric_columns[:4]
+
+    plot_distributions(df, selected_columns, "output/distributions.png")
+    plot_correlation(df, "output/correlation.png")
 
 
 if __name__ == "__main__":
